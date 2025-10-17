@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { getGrades } from "@/services/api/grades";
+import { getAttendance } from "@/services/api/attendance";
+import { createStudent, getStudents, updateStudent } from "@/services/api/students";
 import ApperIcon from "@/components/ApperIcon";
-import SearchBar from "@/components/molecules/SearchBar";
-import FilterPanel from "@/components/molecules/FilterPanel";
-import StudentCard from "@/components/molecules/StudentCard";
 import StudentModal from "@/components/organisms/StudentModal";
 import Button from "@/components/atoms/Button";
+import StudentCard from "@/components/molecules/StudentCard";
+import FilterPanel from "@/components/molecules/FilterPanel";
+import SearchBar from "@/components/molecules/SearchBar";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import { getStudents } from "@/services/api/students";
-import { getGrades } from "@/services/api/grades";
-import { getAttendance } from "@/services/api/attendance";
 
 const Students = () => {
   const [students, setStudents] = useState([]);
@@ -20,9 +21,9 @@ const Students = () => {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({});
-  const [selectedStudent, setSelectedStudent] = useState(null);
+const [selectedStudent, setSelectedStudent] = useState(null);
   const [showModal, setShowModal] = useState(false);
-
+  const [isEditing, setIsEditing] = useState(false);
   useEffect(() => {
     loadStudents();
   }, []);
@@ -48,8 +49,15 @@ const Students = () => {
     }
   };
 
-  const handleViewDetails = (student) => {
+const handleViewDetails = (student) => {
     setSelectedStudent(student);
+    setIsEditing(false);
+    setShowModal(true);
+  };
+
+  const handleAddStudent = () => {
+    setSelectedStudent(null);
+    setIsEditing(true);
     setShowModal(true);
   };
 
@@ -136,7 +144,7 @@ const Students = () => {
             Manage and view student information
           </p>
         </div>
-        <Button variant="gradient" className="w-fit">
+<Button variant="gradient" className="w-fit" onClick={handleAddStudent}>
           <ApperIcon name="Plus" className="h-4 w-4 mr-2" />
           Add Student
         </Button>
@@ -187,23 +195,44 @@ const Students = () => {
       ) : (
         <Empty
           title="No students found"
-          message={searchQuery || Object.keys(filters).length > 0 
+message={searchQuery || Object.keys(filters).length > 0 
             ? "Try adjusting your search or filters" 
             : "Get started by adding your first student"
           }
           actionLabel="Add Student"
+          onAction={handleAddStudent}
           icon="Users"
         />
       )}
 
       {/* Student Modal */}
-      <StudentModal
+<StudentModal
         student={selectedStudent}
         isOpen={showModal}
+        isEditing={isEditing}
         onClose={() => {
           setShowModal(false);
           setSelectedStudent(null);
+          setIsEditing(false);
         }}
+        onSave={async (studentData) => {
+          try {
+            if (selectedStudent) {
+              await updateStudent(selectedStudent.Id, studentData);
+              toast.success('Student updated successfully');
+            } else {
+              await createStudent(studentData);
+              toast.success('Student added successfully');
+            }
+            setShowModal(false);
+            setSelectedStudent(null);
+            setIsEditing(false);
+            loadStudents();
+          } catch (error) {
+            toast.error(error.message || 'Failed to save student');
+          }
+        }}
+        onEdit={() => setIsEditing(true)}
         grades={selectedStudent ? getStudentGrades(selectedStudent.Id) : []}
         attendance={selectedStudent ? getStudentAttendance(selectedStudent.Id) : []}
       />

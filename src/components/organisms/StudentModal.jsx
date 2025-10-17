@@ -5,9 +5,24 @@ import Badge from "@/components/atoms/Badge";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 
-const StudentModal = ({ student, isOpen, onClose, grades = [], attendance = [] }) => {
+const StudentModal = ({ student, isOpen, onClose, onSave, onEdit, isEditing: isEditingProp, grades = [], attendance = [] }) => {
   const [activeTab, setActiveTab] = useState("profile");
-
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    gradeLevel: '',
+    class: '',
+    status: 'Active',
+    photo: '',
+    parentContact: {
+      name: '',
+      phone: '',
+      email: ''
+    }
+  });
   if (!isOpen || !student) return null;
 
   const getStatusVariant = (status) => {
@@ -31,6 +46,78 @@ const StudentModal = ({ student, isOpen, onClose, grades = [], attendance = [] }
     return `${Math.round((present / attendance.length) * 100)}%`;
   };
 
+React.useEffect(() => {
+    if (isOpen) {
+      setIsEditing(isEditingProp || false);
+      if (student) {
+        setFormData({
+          firstName: student.firstName || '',
+          lastName: student.lastName || '',
+          email: student.email || '',
+          phone: student.phone || '',
+          gradeLevel: student.gradeLevel || '',
+          class: student.class || '',
+          status: student.status || 'Active',
+          photo: student.photo || '',
+          parentContact: {
+            name: student.parentContact?.name || '',
+            phone: student.parentContact?.phone || '',
+            email: student.parentContact?.email || ''
+          }
+        });
+      } else {
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          gradeLevel: '',
+          class: '',
+          status: 'Active',
+          photo: '',
+          parentContact: {
+            name: '',
+            phone: '',
+            email: ''
+          }
+        });
+      }
+    }
+  }, [isOpen, student, isEditingProp]);
+
+  const handleInputChange = (field, value) => {
+    if (field.includes('.')) {
+      const [parent, child] = field.split('.');
+      setFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+  };
+
+  const handleSave = () => {
+    if (!formData.firstName || !formData.lastName || !formData.email) {
+      return;
+    }
+    onSave(formData);
+  };
+
+  const handleCancel = () => {
+    if (student) {
+      setIsEditing(false);
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
@@ -39,25 +126,39 @@ const StudentModal = ({ student, isOpen, onClose, grades = [], attendance = [] }
       />
       <Card className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden bg-gradient-to-br from-white to-gray-50/50 mx-4">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary/10 to-info/10 px-6 py-4 border-b border-gray-200">
+<div className="bg-gradient-to-r from-primary/10 to-info/10 px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Avatar
-                src={student.photo}
-                alt={`${student.firstName} ${student.lastName}`}
-                size="xl"
-              />
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {student.firstName} {student.lastName}
-                </h2>
-                <p className="text-gray-600">
-                  Grade {student.gradeLevel} • {student.class}
-                </p>
-                <Badge variant={getStatusVariant(student.status)} className="mt-2">
-                  {student.status}
-                </Badge>
-              </div>
+              {student && !isEditing && (
+                <>
+                  <Avatar
+                    src={student.photo}
+                    alt={`${student.firstName} ${student.lastName}`}
+                    size="xl"
+                  />
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      {student.firstName} {student.lastName}
+                    </h2>
+                    <p className="text-gray-600">
+                      Grade {student.gradeLevel} • {student.class}
+                    </p>
+                    <Badge variant={getStatusVariant(student.status)} className="mt-2">
+                      {student.status}
+                    </Badge>
+                  </div>
+                </>
+              )}
+              {isEditing && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {student ? 'Edit Student' : 'Add New Student'}
+                  </h2>
+                  <p className="text-gray-600">
+                    Fill in the student information below
+                  </p>
+                </div>
+              )}
             </div>
             <Button onClick={onClose} variant="ghost" size="sm">
               <ApperIcon name="X" className="h-5 w-5" />
@@ -91,65 +192,233 @@ const StudentModal = ({ student, isOpen, onClose, grades = [], attendance = [] }
 
         {/* Content */}
         <div className="p-6 max-h-96 overflow-y-auto">
-          {activeTab === "profile" && (
+{activeTab === "profile" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Contact Information
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <ApperIcon name="Mail" className="h-4 w-4 text-gray-400 mr-3" />
-                      <span className="text-gray-600">{student.email}</span>
+              {!isEditing && student ? (
+                <>
+                  <div className="flex justify-end mb-4">
+                    <Button onClick={() => { setIsEditing(true); if (onEdit) onEdit(); }} variant="outline" size="sm">
+                      <ApperIcon name="Edit" className="h-4 w-4 mr-2" />
+                      Edit Student
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        Contact Information
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center">
+                          <ApperIcon name="Mail" className="h-4 w-4 text-gray-400 mr-3" />
+                          <span className="text-gray-600">{student.email}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <ApperIcon name="Phone" className="h-4 w-4 text-gray-400 mr-3" />
+                          <span className="text-gray-600">{student.phone}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <ApperIcon name="Phone" className="h-4 w-4 text-gray-400 mr-3" />
-                      <span className="text-gray-600">{student.phone}</span>
+                    
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        Parent/Guardian
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center">
+                          <ApperIcon name="User" className="h-4 w-4 text-gray-400 mr-3" />
+                          <span className="text-gray-600">{student.parentContact.name}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <ApperIcon name="Phone" className="h-4 w-4 text-gray-400 mr-3" />
+                          <span className="text-gray-600">{student.parentContact.phone}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <ApperIcon name="Mail" className="h-4 w-4 text-gray-400 mr-3" />
+                          <span className="text-gray-600">{student.parentContact.email}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Parent/Guardian
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <ApperIcon name="User" className="h-4 w-4 text-gray-400 mr-3" />
-                      <span className="text-gray-600">{student.parentContact.name}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <ApperIcon name="Phone" className="h-4 w-4 text-gray-400 mr-3" />
-                      <span className="text-gray-600">{student.parentContact.phone}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <ApperIcon name="Mail" className="h-4 w-4 text-gray-400 mr-3" />
-                      <span className="text-gray-600">{student.parentContact.email}</span>
+                  
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Academic Summary
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <Card className="p-4 text-center bg-gradient-to-br from-primary/5 to-info/5">
+                        <p className="text-2xl font-bold text-primary">{calculateGPA()}</p>
+                        <p className="text-sm text-gray-600">Current GPA</p>
+                      </Card>
+                      <Card className="p-4 text-center bg-gradient-to-br from-success/5 to-primary/5">
+                        <p className="text-2xl font-bold text-success">{calculateAttendanceRate()}</p>
+                        <p className="text-sm text-gray-600">Attendance Rate</p>
+                      </Card>
+                      <Card className="p-4 text-center bg-gradient-to-br from-warning/5 to-error/5">
+                        <p className="text-2xl font-bold text-warning">{grades.length}</p>
+                        <p className="text-sm text-gray-600">Total Assignments</p>
+                      </Card>
                     </div>
                   </div>
+                </>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        First Name <span className="text-error">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange('firstName', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Enter first name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name <span className="text-error">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange('lastName', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Enter last name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email <span className="text-error">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="student@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone
+                      </label>
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="(555) 123-4567"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Grade Level
+                      </label>
+                      <select
+                        value={formData.gradeLevel}
+                        onChange={(e) => handleInputChange('gradeLevel', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Select grade</option>
+                        {[9, 10, 11, 12].map(grade => (
+                          <option key={grade} value={grade}>{grade}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Class
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.class}
+                        onChange={(e) => handleInputChange('class', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="10-A"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Status
+                      </label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => handleInputChange('status', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="At Risk">At Risk</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Parent/Guardian Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Parent Name
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.parentContact.name}
+                          onChange={(e) => handleInputChange('parentContact.name', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                          placeholder="Parent full name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Parent Phone
+                        </label>
+                        <input
+                          type="tel"
+                          value={formData.parentContact.phone}
+                          onChange={(e) => handleInputChange('parentContact.phone', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                          placeholder="(555) 987-6543"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Parent Email
+                        </label>
+                        <input
+                          type="email"
+                          value={formData.parentContact.email}
+                          onChange={(e) => handleInputChange('parentContact.email', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                          placeholder="parent@example.com"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t">
+                    <Button onClick={handleCancel} variant="outline">
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleSave} 
+                      variant="gradient"
+                      disabled={!formData.firstName || !formData.lastName || !formData.email}
+                    >
+                      <ApperIcon name="Save" className="h-4 w-4 mr-2" />
+                      {student ? 'Update Student' : 'Add Student'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Academic Summary
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <Card className="p-4 text-center bg-gradient-to-br from-primary/5 to-info/5">
-                    <p className="text-2xl font-bold text-primary">{calculateGPA()}</p>
-                    <p className="text-sm text-gray-600">Current GPA</p>
-                  </Card>
-                  <Card className="p-4 text-center bg-gradient-to-br from-success/5 to-primary/5">
-                    <p className="text-2xl font-bold text-success">{calculateAttendanceRate()}</p>
-                    <p className="text-sm text-gray-600">Attendance Rate</p>
-                  </Card>
-                  <Card className="p-4 text-center bg-gradient-to-br from-warning/5 to-error/5">
-                    <p className="text-2xl font-bold text-warning">{grades.length}</p>
-                    <p className="text-sm text-gray-600">Total Assignments</p>
-                  </Card>
-                </div>
-              </div>
+              )}
             </div>
           )}
 
