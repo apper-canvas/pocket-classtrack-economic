@@ -1,23 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createAttendance, deleteAttendance, getAttendance, updateAttendance } from "@/services/api/attendance";
+import { getStudents } from "@/services/api/students";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
-import Card from "@/components/atoms/Card";
-import Avatar from "@/components/atoms/Avatar";
 import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import { getAttendance } from "@/services/api/attendance";
-import { getStudents } from "@/services/api/students";
 
 const Attendance = () => {
-  const [attendance, setAttendance] = useState([]);
+const [attendance, setAttendance] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [viewMode, setViewMode] = useState("daily"); // daily, weekly, monthly
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAttendance, setEditingAttendance] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   useEffect(() => {
     loadAttendance();
   }, []);
@@ -36,6 +37,40 @@ const Attendance = () => {
       setStudents(studentsData);
     } catch (err) {
       setError("Failed to load attendance data");
+    } finally {
+      setLoading(false);
+    }
+};
+
+  const handleMarkAttendance = () => {
+    setEditingAttendance(null);
+    setIsEditing(true);
+    setIsModalOpen(true);
+  };
+
+  const handleEditAttendance = (record) => {
+    setEditingAttendance(record);
+    setIsEditing(true);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveAttendance = async (attendanceData) => {
+    try {
+      setLoading(true);
+      if (editingAttendance) {
+        await updateAttendance(editingAttendance.Id, attendanceData);
+        setAttendance(prev => prev.map(a => a.Id === editingAttendance.Id ? { ...a, ...attendanceData } : a));
+        toast.success("Attendance updated successfully");
+      } else {
+        const newRecord = await createAttendance(attendanceData);
+        setAttendance(prev => [...prev, newRecord]);
+        toast.success("Attendance marked successfully");
+      }
+      setIsModalOpen(false);
+      setEditingAttendance(null);
+      setIsEditing(false);
+    } catch (err) {
+      toast.error(err.message || "Failed to save attendance");
     } finally {
       setLoading(false);
     }
@@ -110,7 +145,7 @@ const Attendance = () => {
             Track and manage student attendance
           </p>
         </div>
-        <Button variant="gradient" className="w-fit">
+<Button variant="gradient" className="w-fit" onClick={handleMarkAttendance}>
           <ApperIcon name="Plus" className="h-4 w-4 mr-2" />
           Mark Attendance
         </Button>
@@ -300,8 +335,21 @@ const Attendance = () => {
               icon="Users"
             />
           )}
-        </>
+</>
       )}
+
+      <MarkAttendanceModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingAttendance(null);
+          setIsEditing(false);
+        }}
+        onSave={handleSaveAttendance}
+        attendance={editingAttendance}
+        students={students}
+        isEditing={isEditing}
+      />
     </div>
   );
 };

@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createClass, deleteClass, getClasses, updateClass } from "@/services/api/classes";
+import { getStudents } from "@/services/api/students";
 import ApperIcon from "@/components/ApperIcon";
-import SearchBar from "@/components/molecules/SearchBar";
 import Button from "@/components/atoms/Button";
-import Card from "@/components/atoms/Card";
 import Badge from "@/components/atoms/Badge";
+import Card from "@/components/atoms/Card";
 import Avatar from "@/components/atoms/Avatar";
+import SearchBar from "@/components/molecules/SearchBar";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import { getClasses } from "@/services/api/classes";
-import { getStudents } from "@/services/api/students";
+import AddClassModal from "@/components/organisms/AddClassModal";
+import { toast } from "react-hot-toast";
 
 const Classes = () => {
   const [classes, setClasses] = useState([]);
@@ -17,7 +19,9 @@ const Classes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   useEffect(() => {
     loadClasses();
   }, []);
@@ -36,6 +40,40 @@ const Classes = () => {
       setStudents(studentsData);
     } catch (err) {
       setError("Failed to load classes");
+    } finally {
+      setLoading(false);
+    }
+};
+
+  const handleAddClass = () => {
+    setEditingClass(null);
+    setIsEditing(true);
+    setIsModalOpen(true);
+  };
+
+  const handleEditClass = (classItem) => {
+    setEditingClass(classItem);
+    setIsEditing(true);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveClass = async (classData) => {
+    try {
+      setLoading(true);
+      if (editingClass) {
+        await updateClass(editingClass.Id, classData);
+        setClasses(prev => prev.map(c => c.Id === editingClass.Id ? { ...c, ...classData } : c));
+        toast.success("Class updated successfully");
+      } else {
+        const newClass = await createClass(classData);
+        setClasses(prev => [...prev, newClass]);
+        toast.success("Class added successfully");
+      }
+      setIsModalOpen(false);
+      setEditingClass(null);
+      setIsEditing(false);
+    } catch (err) {
+      toast.error(err.message || "Failed to save class");
     } finally {
       setLoading(false);
     }
@@ -90,7 +128,7 @@ const Classes = () => {
             Manage and organize your classes and student groups
           </p>
         </div>
-        <Button variant="gradient" className="w-fit">
+<Button variant="gradient" className="w-fit" onClick={handleAddClass}>
           <ApperIcon name="Plus" className="h-4 w-4 mr-2" />
           Add Class
         </Button>
@@ -207,10 +245,22 @@ const Classes = () => {
           }
           actionLabel="Add Class"
           icon="School"
+icon="School"
         />
       )}
+
+      {/* Add/Edit Class Modal */}
+      <AddClassModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingClass(null);
+          setIsEditing(false);
+        }}
+        onSave={handleSaveClass}
+        classItem={editingClass}
+        isEditing={isEditing}
+      />
     </div>
   );
 };
-
-export default Classes;

@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createGrade, deleteGrade, getGrades, updateGrade } from "@/services/api/grades";
+import { getStudents } from "@/services/api/students";
 import ApperIcon from "@/components/ApperIcon";
-import SearchBar from "@/components/molecules/SearchBar";
 import Button from "@/components/atoms/Button";
+import Badge from "@/components/atoms/Badge";
 import Card from "@/components/atoms/Card";
 import Avatar from "@/components/atoms/Avatar";
-import Badge from "@/components/atoms/Badge";
+import SearchBar from "@/components/molecules/SearchBar";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import { getGrades } from "@/services/api/grades";
-import { getStudents } from "@/services/api/students";
 
 const Grades = () => {
-  const [grades, setGrades] = useState([]);
+const [grades, setGrades] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingGrade, setEditingGrade] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   useEffect(() => {
     loadGrades();
   }, []);
@@ -37,6 +39,40 @@ const Grades = () => {
       setStudents(studentsData);
     } catch (err) {
       setError("Failed to load grades");
+    } finally {
+      setLoading(false);
+    }
+};
+
+  const handleAddGrade = () => {
+    setEditingGrade(null);
+    setIsEditing(true);
+    setIsModalOpen(true);
+  };
+
+  const handleEditGrade = (grade) => {
+    setEditingGrade(grade);
+    setIsEditing(true);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveGrade = async (gradeData) => {
+    try {
+      setLoading(true);
+      if (editingGrade) {
+        await updateGrade(editingGrade.Id, gradeData);
+        setGrades(prev => prev.map(g => g.Id === editingGrade.Id ? { ...g, ...gradeData } : g));
+        toast.success("Grade updated successfully");
+      } else {
+        const newGrade = await createGrade(gradeData);
+        setGrades(prev => [...prev, newGrade]);
+        toast.success("Grade added successfully");
+      }
+      setIsModalOpen(false);
+      setEditingGrade(null);
+      setIsEditing(false);
+    } catch (err) {
+      toast.error(err.message || "Failed to save grade");
     } finally {
       setLoading(false);
     }
@@ -120,7 +156,7 @@ const Grades = () => {
             Manage and track student grades and assignments
           </p>
         </div>
-        <Button variant="gradient" className="w-fit">
+<Button variant="gradient" className="w-fit" onClick={handleAddGrade}>
           <ApperIcon name="Plus" className="h-4 w-4 mr-2" />
           Add Grade
         </Button>
@@ -268,7 +304,7 @@ const Grades = () => {
             </table>
           </div>
         </Card>
-      ) : (
+) : (
         <Empty
           title="No grades found"
           message={searchQuery || selectedSubject 
@@ -279,6 +315,19 @@ const Grades = () => {
           icon="BookOpen"
         />
       )}
+
+      <AddGradeModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingGrade(null);
+          setIsEditing(false);
+        }}
+        onSave={handleSaveGrade}
+        grade={editingGrade}
+        students={students}
+        isEditing={isEditing}
+      />
     </div>
   );
 };
