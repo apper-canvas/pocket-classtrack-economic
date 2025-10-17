@@ -11,7 +11,7 @@ import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
 import AddClassModal from "@/components/organisms/AddClassModal";
-import { toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 
 const Classes = () => {
   const [classes, setClasses] = useState([]);
@@ -126,9 +126,9 @@ const Classes = () => {
           </h1>
           <p className="text-gray-600">
             Manage and organize your classes and student groups
-          </p>
+</p>
         </div>
-<Button variant="gradient" className="w-fit" onClick={handleAddClass}>
+        <Button variant="gradient" className="w-fit" onClick={handleAddClass}>
           <ApperIcon name="Plus" className="h-4 w-4 mr-2" />
           Add Class
         </Button>
@@ -242,10 +242,9 @@ const Classes = () => {
           message={searchQuery 
             ? "Try adjusting your search query" 
             : "Get started by creating your first class"
-          }
+}
           actionLabel="Add Class"
           icon="School"
-icon="School"
         />
       )}
 
