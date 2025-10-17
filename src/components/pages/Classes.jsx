@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { createClass, deleteClass, getClasses, updateClass } from "@/services/api/classes";
 import { getStudents } from "@/services/api/students";
 import ApperIcon from "@/components/ApperIcon";
+import ClassModal from "@/components/organisms/ClassModal";
 import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
 import Card from "@/components/atoms/Card";
@@ -10,8 +12,6 @@ import SearchBar from "@/components/molecules/SearchBar";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import AddClassModal from "@/components/organisms/AddClassModal";
-import { toast } from "react-toastify";
 
 const Classes = () => {
   const [classes, setClasses] = useState([]);
@@ -247,9 +247,8 @@ const Classes = () => {
           icon="School"
         />
       )}
-
-      {/* Add/Edit Class Modal */}
-      <AddClassModal
+{/* Add/Edit Class Modal */}
+      <ClassModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
