@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
 import { getGrades } from "@/services/api/grades";
 import { getAttendance } from "@/services/api/attendance";
 import { createStudent, getStudents, updateStudent } from "@/services/api/students";
@@ -215,7 +215,7 @@ message={searchQuery || Object.keys(filters).length > 0
           setSelectedStudent(null);
           setIsEditing(false);
         }}
-        onSave={async (studentData) => {
+onSave={async (studentData) => {
           try {
             if (selectedStudent) {
               await updateStudent(selectedStudent.Id, studentData);
