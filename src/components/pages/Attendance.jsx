@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { createAttendance, deleteAttendance, getAttendance, updateAttendance } from "@/services/api/attendance";
 import { getStudents } from "@/services/api/students";
 import ApperIcon from "@/components/ApperIcon";
+import MarkAttendanceModal from "@/components/organisms/AttendanceModal";
 import Button from "@/components/atoms/Button";
 import Badge from "@/components/atoms/Badge";
 import Card from "@/components/atoms/Card";
+import Avatar from "@/components/atoms/Avatar";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
