@@ -416,27 +416,27 @@ const [parent, child] = field.split('.');
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                           placeholder="parent@example.com"
                         />
-                      </div>
+</div>
                     </div>
                   </div>
-
-{isEditing && (
-                    <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50 sticky bottom-0 z-10">
-                      <Button onClick={handleCancel} variant="outline">
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={handleSave} 
-                        variant="gradient"
-                        disabled={!formData.firstName || !formData.lastName || !formData.email}
-                      >
-                        <ApperIcon name="Save" className="h-4 w-4 mr-2" />
-                        {student ? 'Update Student' : 'Add Student'}
-                      </Button>
-                    </div>
-                  )}
                 </div>
               )}
+            </div>
+          )}
+
+          {isEditing && (
+            <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50">
+              <Button onClick={handleCancel} variant="outline">
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                variant="gradient"
+                disabled={!formData.firstName || !formData.lastName || !formData.email}
+              >
+                <ApperIcon name="Save" className="h-4 w-4 mr-2" />
+                {student ? 'Update Student' : 'Add Student'}
+              </Button>
             </div>
           )}
 
