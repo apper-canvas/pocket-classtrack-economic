@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ApperIcon from "@/components/ApperIcon";
-import Avatar from "@/components/atoms/Avatar";
-import Badge from "@/components/atoms/Badge";
 import Button from "@/components/atoms/Button";
+import Badge from "@/components/atoms/Badge";
 import Card from "@/components/atoms/Card";
+import Avatar from "@/components/atoms/Avatar";
+import Grades from "@/components/pages/Grades";
+import Attendance from "@/components/pages/Attendance";
 
 const StudentModal = ({ student, isOpen, onClose, onSave, onEdit, isEditing: isEditingProp, grades = [], attendance = [] }) => {
   const [activeTab, setActiveTab] = useState("profile");
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isEditingProp || false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -23,30 +25,10 @@ const StudentModal = ({ student, isOpen, onClose, onSave, onEdit, isEditing: isE
       email: ''
     }
   });
-  if (!isOpen || !student) return null;
-
-  const getStatusVariant = (status) => {
-    switch (status?.toLowerCase()) {
-      case "active": return "success";
-      case "inactive": return "error";
-      case "at risk": return "warning";
-      default: return "default";
-    }
-  };
-
-  const calculateGPA = () => {
-    if (!grades.length) return "N/A";
-    const total = grades.reduce((sum, grade) => sum + (grade.score / grade.maxScore) * 4, 0);
-    return (total / grades.length).toFixed(2);
-  };
-
-  const calculateAttendanceRate = () => {
-    if (!attendance.length) return "N/A";
-    const present = attendance.filter(a => a.status === "Present").length;
-    return `${Math.round((present / attendance.length) * 100)}%`;
-  };
-
-React.useEffect(() => {
+  const [errors, setErrors] = useState({});
+  const [imagePreview, setImagePreview] = useState(student?.photo || '');
+  // Initialize form data when modal opens or student changes
+  React.useEffect(() => {
     if (isOpen) {
       setIsEditing(isEditingProp || false);
       if (student) {
@@ -82,11 +64,11 @@ React.useEffect(() => {
           }
         });
       }
-    }
-  }, [isOpen, student, isEditingProp]);
+}, [isOpen, student, isEditingProp]);
 
   const handleInputChange = (field, value) => {
     if (field.includes('.')) {
+      const [parent, child] = field.split('.');
       const [parent, child] = field.split('.');
       setFormData(prev => ({
         ...prev,
@@ -115,8 +97,42 @@ React.useEffect(() => {
       setIsEditing(false);
     } else {
       onClose();
+}
+  };
+
+  const getStatusVariant = (status) => {
+    switch (status) {
+      case 'Active':
+        return 'success';
+      case 'Inactive':
+        return 'secondary';
+      case 'At Risk':
+        return 'error';
+      default:
+        return 'default';
     }
   };
+
+  const calculateGPA = () => {
+    if (!grades || grades.length === 0) return 'N/A';
+    const totalPercentage = grades.reduce((sum, grade) => {
+      return sum + ((grade.score / grade.maxScore) * 100);
+    }, 0);
+    const avgPercentage = totalPercentage / grades.length;
+    const gpa = (avgPercentage / 100) * 4;
+    return gpa.toFixed(2);
+  };
+
+  const calculateAttendanceRate = () => {
+    if (!attendance || attendance.length === 0) return 'N/A';
+    const presentCount = attendance.filter(record => 
+      record.status.toLowerCase() === 'present'
+    ).length;
+    const rate = (presentCount / attendance.length) * 100;
+    return `${rate.toFixed(1)}%`;
+  };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
