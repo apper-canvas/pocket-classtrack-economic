@@ -207,7 +207,7 @@ const [parent, child] = field.split('.');
         </div>
 
         {/* Content */}
-<div className="p-6 max-h-96 overflow-y-auto flex-1">
+<div className="p-6 max-h-[calc(80vh-200px)] overflow-y-auto">
 {activeTab === "profile" && (
             <div className="space-y-6">
               {!isEditing && student ? (
@@ -420,8 +420,8 @@ const [parent, child] = field.split('.');
                     </div>
                   </div>
 
-                  {isEditing && (
-                    <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50">
+{isEditing && (
+                    <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50 sticky bottom-0 z-10">
                       <Button onClick={handleCancel} variant="outline">
                         Cancel
                       </Button>
