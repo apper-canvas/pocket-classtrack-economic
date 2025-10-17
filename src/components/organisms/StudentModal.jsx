@@ -28,7 +28,7 @@ const StudentModal = ({ student, isOpen, onClose, onSave, onEdit, isEditing: isE
   const [errors, setErrors] = useState({});
   const [imagePreview, setImagePreview] = useState(student?.photo || '');
   // Initialize form data when modal opens or student changes
-  React.useEffect(() => {
+React.useEffect(() => {
     if (isOpen) {
       setIsEditing(isEditingProp || false);
       if (student) {
@@ -64,12 +64,12 @@ const StudentModal = ({ student, isOpen, onClose, onSave, onEdit, isEditing: isE
           }
         });
       }
-}, [isOpen, student, isEditingProp]);
+    }
+  }, [isOpen, student, isEditingProp]);
 
   const handleInputChange = (field, value) => {
     if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      const [parent, child] = field.split('.');
+const [parent, child] = field.split('.');
       setFormData(prev => ({
         ...prev,
         [parent]: {
