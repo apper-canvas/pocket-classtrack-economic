@@ -207,7 +207,7 @@ const [parent, child] = field.split('.');
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-96 overflow-y-auto">
+<div className="p-6 max-h-96 overflow-y-auto flex-1">
 {activeTab === "profile" && (
             <div className="space-y-6">
               {!isEditing && student ? (
@@ -276,7 +276,7 @@ const [parent, child] = field.split('.');
                     </div>
                   </div>
                 </>
-              ) : (
+) : (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -420,19 +420,21 @@ const [parent, child] = field.split('.');
                     </div>
                   </div>
 
-                  <div className="flex justify-end space-x-3 pt-4 border-t">
-                    <Button onClick={handleCancel} variant="outline">
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleSave} 
-                      variant="gradient"
-                      disabled={!formData.firstName || !formData.lastName || !formData.email}
-                    >
-                      <ApperIcon name="Save" className="h-4 w-4 mr-2" />
-                      {student ? 'Update Student' : 'Add Student'}
-                    </Button>
-                  </div>
+                  {isEditing && (
+                    <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50">
+                      <Button onClick={handleCancel} variant="outline">
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleSave} 
+                        variant="gradient"
+                        disabled={!formData.firstName || !formData.lastName || !formData.email}
+                      >
+                        <ApperIcon name="Save" className="h-4 w-4 mr-2" />
+                        {student ? 'Update Student' : 'Add Student'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -515,7 +517,7 @@ const [parent, child] = field.split('.');
               ) : (
                 <p className="text-gray-600 text-center py-8">No attendance records yet.</p>
               )}
-            </div>
+</div>
           )}
         </div>
       </Card>
